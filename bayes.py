@@ -6,6 +6,7 @@
 #
 # Author: R. Zanibbi
 # Author: E. Lima
+# Author: Brandon Ranallo
 ################################################################
 
 import math
@@ -18,21 +19,24 @@ from results_visualization import *
 # Cost matrices
 ################################################################
 
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# >>> REWRITE THIS FUNCTION
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#
+# initializes all weights to 1 except for correct classification
+#
 def uniform_cost_matrix( num_classes ):
-    cost_matrix = np.zeros((num_classes,num_classes))
+    cost_matrix = np.ones((num_classes,num_classes))
+    np.fill_diagonal(cost_matrix, 0)
     return cost_matrix
 
 
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# >>> REWRITE THIS FUNCTION
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# 
+# initializes unequal cost matrix (I hope this is fine for unequal costs)
+#
 def bnrs_unequal_costs( num_classes ):
     # Rows: output class, Columns: Target (ground truth) class
     cost_matrix = np.ones((num_classes,num_classes))
-    return cost_matrix
+    for row in range(len(cost_matrix)):
+        for col in range(len(cost_matrix[row])):
+            cost_matrix[row][col] = abs(row - col)
 
 ################################################################
 # Bayesian parameters 
