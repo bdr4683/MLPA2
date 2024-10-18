@@ -90,24 +90,44 @@ def mean_vector( data_matrix ):
     # Axis 0 is along columns (default)
     return np.mean( data_matrix, axis=0)
 
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# >>> REWRITE THIS FUNCTION
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#
+# Takes in a matrix of datapoints with a common label and returns covariance matrix
+# and inverse covariance matrix
+#
 def covariances( data_matrix ):
     # HEADS-UP: The product of the matrix by its inverse may not be identical to the identity matrix
     #           due to finite precision. Can use np.allclose() to test for 'closeness'
     #           to ideal identity matrix (e.g., np.eye(2) for 2D identity matrix)
-    dnpcheck('data_matrix shape: ', data_matrix)
-    d = data_matrix.shape[1]
+    means = mean_vector( data_matrix )
 
+    covariance = 0
+    x_var = 0
+    y_var = 0
+    for data in data_matrix:
+        covariance += (data[0] - means[0]) * (data[1] - means[1])
+        x_var += (data[0] - means[0])^2
+        y_var += (data[1] - means[1])^2
+    
+    covariance = covariance / len(data_matrix)
+    x_var = x_var / len(data_matrix)
+    y_var = y_var / len(data_matrix)
+    
+    covariance_matrix = np.array([[x_var, covariance],
+                                  [covariance, y_var]])
+    inverse_covariance_matrix = np.linalg.inv(covariance_matrix)
+    
     # Returns a pair: ( covariance_matrix, inverse_covariance_matrix )
-    return ( np.eye(d), np.eye(d) )
+    return ( covariance_matrix, inverse_covariance_matrix )
 
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# >>> REWRITE THIS FUNCTION
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+#
+# Probability density function at the mean
+#
 def mean_density( cov_matrix ):
-    return 1.0
+    det = np.linalg.det(cov_matrix)
+    # Can discount exponent at the mean
+    return 1.0 / ((2 * np.pi) * (det ** 0.5))
+
  
 
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
