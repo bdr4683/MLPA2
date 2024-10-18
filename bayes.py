@@ -52,8 +52,6 @@ def bnrs_unequal_costs( num_classes ):
 #
 def priors( split_data ):
 
-    dnpcheck('split_data structure: ', split_data)
-
     est_priors = np.zeros(len(split_data))
     num_points = 0
     for label in split_data:
@@ -105,8 +103,8 @@ def covariances( data_matrix ):
     y_var = 0
     for data in data_matrix:
         covariance += (data[0] - means[0]) * (data[1] - means[1])
-        x_var += (data[0] - means[0])^2
-        y_var += (data[1] - means[1])^2
+        x_var += (data[0] - means[0]) * (data[0] - means[0]) 
+        y_var += (data[1] - means[1]) * (data[1] - means[1])
     
     covariance = covariance / len(data_matrix)
     x_var = x_var / len(data_matrix)
@@ -130,18 +128,23 @@ def mean_density( cov_matrix ):
 
  
 
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# >>> REWRITE THIS FUNCTION
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#
+# returns an array of squared mahalanobis distances
+#
 def sq_mhlnbs_dist( data_matrix, mean_vector, cov_inverse ):
     # Square of distance from the mean in *standard deviations* 
     # (e.g., a sqared mahalanobis distance of 9 implies a point is sqrt(9) = 3 standard
     # deviations from the mean.
 
     # Numpy 'broadcasting' insures that the mean vector is subtracted row-wise
-    diff = data_matrix - mean_vector
+    
+    square_distances = np.zeros((len(data_matrix)))
 
-    return np.min(diff,axis=1) 
+    for x in range(len(data_matrix)):
+        diff = data_matrix[x] - mean_vector
+        square_distances[x] = np.matmul(np.matmul(np.transpose(diff), cov_inverse), diff)
+
+    return square_distances
 
 def gaussian( mean_density, distances ):
     # NOTE: distances is a column vector of squared mahalanobis distances
@@ -167,6 +170,9 @@ def map_classifier( priors, mean_vectors, covariance_pairs ):
     peak_scores = priors * np.array( [ mean_density(c) for c in covariances ] )
 
     inv_covariances =  np.array( [ cov_pair[1] for cov_pair in covariance_pairs ] )
+
+    dnpcheck('covariances shape: ', inv_covariances.shape)
+
     num_classes = len(priors)
 
     def classifier( data_matrix ):
@@ -178,7 +184,15 @@ def map_classifier( priors, mean_vectors, covariance_pairs ):
 
         #>>>>>>>>> EDIT THIS SECTION
         
-        class_scores[:,-1] = np.zeros( num_samples)
+        for c in range(num_classes):
+            mhlnbs_distances = sq_mhlnbs_dist(data_matrix=data_matrix, mean_vector=mean_vectors[c], cov_inverse=inv_covariances[c])
+            scores = gaussian(peak_scores[c], distances=distances[:, c])
+            for x in range(num_samples):
+                distances[x, c] = mhlnbs_distances[x]
+
+                class_scores[x, c] = scores[x]
+
+        class_scores[:, num_classes] = np.argmax(class_scores[:, :-1], axis=1)
         
         #>>>>>>>>>> END SECTION TO EDIT
         
