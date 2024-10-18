@@ -33,20 +33,34 @@ def uniform_cost_matrix( num_classes ):
 #
 def bnrs_unequal_costs( num_classes ):
     # Rows: output class, Columns: Target (ground truth) class
-    cost_matrix = np.ones((num_classes,num_classes))
-    for row in range(len(cost_matrix)):
-        for col in range(len(cost_matrix[row])):
-            cost_matrix[row][col] = abs(row - col)
+    if num_classes == 2:
+        return uniform_cost_matrix(num_classes=num_classes)
+
+    else:
+        return np.array([[-0.20, 0.07, 0.07, 0.07],
+                     [0.07, -0.15, 0.07, 0.07],
+                     [0.07, 0.07, -0.05, 0.07],
+                     [0.03, 0.03, 0.03, 0.03]])
+
 
 ################################################################
 # Bayesian parameters 
 ################################################################
 
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# >>> REWRITE THIS FUNCTION
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#
+# defining priors as the portion of data points of each class out of all data points
+#
 def priors( split_data ):
-    est_priors = [ 1/len(split_data) ] * len(split_data)
+
+    dnpcheck('split_data structure: ', split_data)
+
+    est_priors = np.zeros(len(split_data))
+    num_points = 0
+    for label in split_data:
+        num_points = num_points + len(label)
+
+    for i in range(len(split_data)):
+        est_priors[i] = float(len(split_data[i])) / num_points
 
     return est_priors
 
@@ -83,6 +97,7 @@ def covariances( data_matrix ):
     # HEADS-UP: The product of the matrix by its inverse may not be identical to the identity matrix
     #           due to finite precision. Can use np.allclose() to test for 'closeness'
     #           to ideal identity matrix (e.g., np.eye(2) for 2D identity matrix)
+    dnpcheck('data_matrix shape: ', data_matrix)
     d = data_matrix.shape[1]
 
     # Returns a pair: ( covariance_matrix, inverse_covariance_matrix )
